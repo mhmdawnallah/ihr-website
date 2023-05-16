@@ -181,21 +181,29 @@ export default {
         const asnNumber = data[i].asn.toString()
         const asnName = data[i].asn_name.toString()
         if (!isNaN(asnName)) {
-          const promise = this.getASNNameAndIsoCode(asnNumber)
+          const promise = this.getASNNameAndIsoCodeWithDelay(asnNumber, data, i)
+          promises.push(promise)
+        } else {
+          data[i].country_iso_code2 = asnName.split(', ').splice(-1)[0]
+        }
+      }
+      return Promise.all(promises)
+    },
+    getASNNameAndIsoCodeWithDelay(asnNumber, data, i) {
+      return new Promise((resolve, reject) => {
+        setTimeout(() => {
+          this.getASNNameAndIsoCode(asnNumber)
             .then(asnNameAndIsoCode2 => {
               data[i].country_iso_code2 = asnNameAndIsoCode2['country_iso_code2']
               data[i].asn_name = asnNameAndIsoCode2['asn_name']
+              resolve()
             })
             .catch(error => {
               console.error(error)
               reject(error)
             })
-          promises.push(promise)
-        } else {
-          data[i].country_iso_code2 = data[i].asn_name.split(', ').splice(-1)[0]
-        }
-      }
-      return Promise.all(promises)
+        }, 1000)
+      })
     },
     getASNNameAndIsoCode(asnNumber) {
       let networkQueryFilter = new NetworkQuery().asNumber(asnNumber)
